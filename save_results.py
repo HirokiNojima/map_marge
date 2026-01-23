@@ -70,7 +70,7 @@ def save_results(merged_md, target_name, output_folder="results", add_scalebar=T
 
     # 2. コントラスト調整 (重要!)
     # 最大値・最小値をそのまま使うと、スパイクノイズで真っ暗になるため、
-    # 上位・下位 5% をカットした範囲を色の基準にします（AFM画像の定石）。
+    # 上位・下位 5% をカットした範囲を色の基準にする。
     vmin = np.percentile(data[valid_mask], 5)   # 下位5%
     vmax = np.percentile(data[valid_mask], 95)  # 上位95%
 
@@ -95,7 +95,7 @@ def save_results(merged_md, target_name, output_folder="results", add_scalebar=T
         print(f"imsave failed: {e}")
 
     # --- B. プロット画像 (閲覧・資料用) ---
-    # こちらにスケールバーを追加する
+    # こちらにスケールバーを追加
     fig, ax = plt.subplots(figsize=(10, 10))
     
     plot_cmap = plt.get_cmap('afmhot').copy()
@@ -110,7 +110,7 @@ def save_results(merged_md, target_name, output_folder="results", add_scalebar=T
     # タイトル
     ax.set_title("Merged AFM Map")
 
-    # ★ スケールバー追加処理 ★
+    # スケールバー追加処理
     if add_scalebar:
         # 文字が見えやすいように色を自動調整（背景が白なら黒、黒なら白）
         # afmhotの下の方は黒っぽいので、白文字が見やすい

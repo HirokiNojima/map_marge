@@ -36,7 +36,7 @@ def create_weight_mask(shape, edge_falloff=0.1):
     
     return weight_mask
 
-def _flatten_image(data, method='plane', sigma=50):
+def flatten_image(data, method='plane', sigma=50):
     """
     Args:
         method (str): 
@@ -76,11 +76,9 @@ def _flatten_image(data, method='plane', sigma=50):
         print(f"Flatten: {method.capitalize()} Plane removed")
 
     elif method == 'poly':
-        # ★追加: 2次曲面 (Z = aX^2 + bY^2 + cXY + dX + eY + f)
-        # これが最も「自然」に全体の歪みを取ります
+        #  2次曲面 (Z = aX^2 + bY^2 + cXY + dX + eY + f)
         
         # 計算量削減のため、データ点を間引いてフィッティングする (1/100程度)
-        # ※全点使うと重いため
         skip = 10 
         X_use = X_valid[::skip]
         Y_use = Y_valid[::skip]
@@ -111,7 +109,7 @@ def _flatten_image(data, method='plane', sigma=50):
 
 def merged_maps(dataset):
     """
-    AFMマップを連結する (修正版)
+    AFMマップを連結する
     """
     sorted_keys = sorted(dataset.keys(), key=lambda k: (dataset[k].y_motor, dataset[k].x_motor))
     if not sorted_keys:
@@ -136,7 +134,7 @@ def merged_maps(dataset):
     total_width = int(np.ceil((max_x_phys - min_x_phys) / pixel_size_x)) + margin
     total_height = int(np.ceil((max_y_phys - min_y_phys) / pixel_size_y)) + margin
 
-    # 【修正1】Canvasは 0 で初期化する (累積加算のため)
+    # Canvasは 0 で初期化(累積加算のため)
     canvas = np.zeros((total_height, total_width), dtype=np.float32)
     weight_map = np.zeros((total_height, total_width), dtype=np.float32)
 
@@ -189,26 +187,24 @@ def merged_maps(dataset):
                 current_img[~nan_mask] += z_offset
                 print(f"[{key}] Leveling applied: offset={z_offset:.4f}")
 
-        # --- 重み付き合成 ---
-        # 1. 重みマスク作成 (端を減衰)
+        # 重み付き合成
+        # 重みマスク作成 (端を減衰)
         blending_mask = create_weight_mask((h, w), edge_falloff=0.2)
         blending_mask[nan_mask] = 0  # データがない場所は重み0
 
-        # 2. 加算
+        # 加算
         canvas[final_y:final_y+h, final_x:final_x+w] += current_img * blending_mask
         weight_map[final_y:final_y+h, final_x:final_x+w] += blending_mask
 
-    # 4. 正規化 (合計値 / 重みの合計)
+    # 正規化 (合計値 / 重みの合計)
     merged_array = np.full_like(canvas, np.nan)
     
     # 重みがある場所だけ計算（0除算回避）
     valid_pixels = weight_map > 0
     merged_array[valid_pixels] = canvas[valid_pixels] / weight_map[valid_pixels]
 
-    # 
-    # 重み付けブレンドの概念図: 2つの台形関数が重なり合い、継ぎ目を滑らかにする様子
 
-    # 5. 自動クロップ
+    # 自動クロップ
     rows = np.any(valid_pixels, axis=1)
     cols = np.any(valid_pixels, axis=0)
     
@@ -229,7 +225,7 @@ def merged_maps(dataset):
 
     # 最終的な2次曲面補正
     if dataset[sorted_keys[0]].target_name == "topography":
-        cropped_array = _flatten_image(cropped_array, method='poly')
+        cropped_array = flatten_image(cropped_array, method='poly')
 
     # 結果格納
     merged_md = map_data()
