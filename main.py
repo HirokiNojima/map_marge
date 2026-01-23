@@ -7,7 +7,7 @@ import os
 
 def main():
     folder_path = r"C:\nojima\AFM6measurement\260115_骨広範囲計測\計測フォルダ"
-    target_name = "youngs_modulus"  # "topography", "youngs_modulus"など
+    target_name = "topography"  # "topography", "youngs_modulus"など
     vmin, vmax = 5, 95
 
     # 連結するファイルとモーター移動履歴を取得
