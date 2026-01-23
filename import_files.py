@@ -57,6 +57,7 @@ def import_files(folder_path, target_name):
         md.y_range = data["y_max"] - data["y_min"]
         md.x_motor = motor_pos[0, 0]
         md.y_motor = motor_pos[0, 1]
+        md.target_name = target_name
         # 辞書に登録
         dataset[item] = md
     return dataset
