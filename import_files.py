@@ -1,6 +1,7 @@
 from map_data import map_data
 import os
 import numpy as np
+import re
 
 def import_files(folder_path, target_name):
     """
@@ -26,15 +27,32 @@ def import_files(folder_path, target_name):
     # フォルダ内の各サブフォルダを走査
     data_count = 0
     if len(os.listdir(folder_path))-1 != motor_history.shape[0]: # -1はmotor_position.csv分
-        print(len(os.listdir(folder_path)))
-        print(motor_history.shape[0])
-        raise ValueError("The number of subfolders does not match the number of motor history entries.")
+        # resultsフォルダが存在する場合はさらに-1
+        if os.path.exists(os.path.join(folder_path, "results")):
+            if len(os.listdir(folder_path))-2 != motor_history.shape[0]:
+                print(len(os.listdir(folder_path)))
+                print(motor_history.shape[0])
+                raise ValueError("The number of subfolders does not match the number of motor history entries.")
+        else:
+            print(len(os.listdir(folder_path)))
+            print(motor_history.shape[0])
+            raise ValueError("The number of subfolders does not match the number of motor history entries.")
 
-    for item in os.listdir(folder_path):
+    def numeric_key(name):
+        # Split into digit/non-digit chunks for natural sort (e.g., 1427_10 > 1427_2)
+        return [int(part) if part.isdigit() else part for part in re.split(r"(\d+)", name)]
+
+    items = sorted(os.listdir(folder_path), key=numeric_key)
+    print(items)
+
+    for item in items:
+        print(f"Processing folder: {item}")
         child_folder_path = os.path.join(folder_path, item)
 
-        # フォルダでない場合はスキップ
+        # フォルダでない場合はと、resultフォルダの場合はスキップ
         if not os.path.isdir(child_folder_path):
+            continue
+        if item == "results":
             continue
 
         # 対象ファイルのパス
