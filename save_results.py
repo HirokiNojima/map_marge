@@ -53,8 +53,6 @@ def save_results(merged_md, target_name, output_folder="results", add_scalebar=T
 
     # 元データをコピー（破壊しないため）
     data = merged_md.map_array.copy()
-    if target_name =="youngs_modulus":
-        data = np.log10(data)
 
     filename_base = os.path.join(output_folder, f"{target_name}_merged_map")
 
@@ -71,8 +69,14 @@ def save_results(merged_md, target_name, output_folder="results", add_scalebar=T
     # 2. コントラスト調整 (重要!)
     # 最大値・最小値をそのまま使うと、スパイクノイズで真っ暗になるため、
     # 上位・下位 5% をカットした範囲を色の基準にする。
-    vmin = np.percentile(data[valid_mask], 5)   # 下位5%
-    vmax = np.percentile(data[valid_mask], 95)  # 上位95%
+    # vmin = np.percentile(data[valid_mask], 3)   # 下位5%
+    # vmax = np.percentile(data[valid_mask], 97)  # 上位95%
+
+    median = np.median(data[valid_mask])
+    q75, q25 = np.percentile(data[valid_mask], [75, 25])
+    iqr = q75 - q25
+    vmin = median - 1.5 * iqr
+    vmax = median + 1.5 * iqr
 
     # NaNの部分を「vmin（一番暗い色）」で埋める
     # ※ これをしておかないとimsaveが混乱します
@@ -101,11 +105,14 @@ def save_results(merged_md, target_name, output_folder="results", add_scalebar=T
     plot_cmap = plt.get_cmap('afmhot').copy()
     plot_cmap.set_bad(color='white') # 背景色
     
-    im = ax.imshow(data, cmap=plot_cmap, vmin=vmin, vmax=vmax)
+    im = ax.imshow(data_filled, cmap=plot_cmap, vmin=vmin, vmax=vmax)
     
     # カラーバー
     cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    cbar.set_label(f"Value [{unit}]" if unit else "Value")
+    if target_name == "youngs_modulus":
+        cbar.set_label(f"Young's Modulus [log10(Pa)]", rotation=270, labelpad=15)
+    elif target_name == "topography":
+        cbar.set_label("Topography [m]", rotation=270, labelpad=15)
 
     # タイトル
     ax.set_title("Merged AFM Map")

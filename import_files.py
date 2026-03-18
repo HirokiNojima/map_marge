@@ -70,7 +70,10 @@ def import_files(folder_path, target_name):
         # map_dataオブジェクトを作成し、データを格納
         md = map_data()
         md.file_name = item
-        md.map_array = data["map_data"]
+        if target_name == "youngs_modulus":
+            md.map_array = np.log10(data["map_data"])
+        else:
+            md.map_array = data["map_data"]
         md.x_range =  data["x_max"] - data["x_min"]
         md.y_range = data["y_max"] - data["y_min"]
         md.x_motor = motor_pos[0, 0]
